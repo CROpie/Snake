@@ -1,0 +1,94 @@
+Fundamentally different from Hangman
+Hangman: event-driven: client pulls state when needed
+    State send from client, server updates game state, server sends back to client
+
+Snake: server pushes state every tick, client listens and sends inputs
+    tick-driven. World changes every tick, even if the player does nothing.
+
+Does the client need to send messages every tick?
+No. Server should drive the tick loop
+1. Server owns the tick
+- Every x ms, server advances game state
+- after each tick, it _broadcasts_ the updated state (or just the delta) to all clients
+
+2. Client listens and renders
+- Client's rendering loop can be independent (eg 60fps canvas redraw)
+- Whenever new state arrives, the client updates its 'authoritative world' and renders from that
+
+3. Clint input is event-driven
+- Keystrokes are sent to the server immediately (eg player 2 pressed LEFT at t=123)
+- Server applies that input at the next tick
+
+Latency
+- pure server-driven: simple, but movement may feel a bit delayed
+- client predication: client moves instantly when key pressed, corrects position when server sends real tick state
+    - smooths gameplay but adds complexity
+
+Updating minisocket.hpp to allow for tick-driven
+
+Need 2 loops running side-by-side
+1: Network loop: (accept connections, handle incoming message, call on_message)
+2: Game loop (tick loop): run at fixed intervals, update game state, broadcast to clients
+
+Design Decision
+1 approach: keep run() as network loop only (clean separation)
+The _game_ owns the tick loop
+
+int main() {
+    minisocket::MiniSocket socket("9002");
+
+    socket.on_message = [](int client_fd, const std::string& payload) {
+        // enqueue input, or handle immediately
+    };
+
+    std::thread([&]() { socket.run(); }).detach();
+
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        updateGameState();
+        broadcastState(socket);
+    }
+}
+
+O clean separation\
+O easy reuse
+X write a little boilerplate in each game
+
+Main thread: continues to while(true) tick loop
+Network thread: waiting for clients and spawning handle_client threads
+Handle_client thread for player 1: waiting for messages from player 1
+
+----------
+
+1 approach: bake tick loop into run()
+Need to pass on_tick() callback in addition to on_message()
+
+void run() {
+    isRunning = true;
+
+    // Thread 1: accept new clients
+    std::thread([this]() {
+        while (isRunning) {
+            int client_fd = accept_new_client();
+            add_client(client_fd);
+            std::thread([this, client_fd]() {
+                handle_client(client_fd);
+            }).detach();
+        }
+    }).detach();
+
+    // Thread 2: game tick loop
+    std::thread([this]() {
+        const int tickRateMs = 100;
+        while (isRunning) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(tickRateMs));
+            updateGameState();
+            broadcastGameState();
+        }
+    }).detach();
+}
+
+-> websocket library is more game-orientated
+O less boilerplate for simple games
+X harder to re-use for event-driven games unless add a 'tickless' mode
+X more coupling between networking and game logic
