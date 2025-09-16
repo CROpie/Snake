@@ -17,5 +17,5 @@ class Snake {
         Direction direction{DOWN};
         Position position{0,0};
 
-        void move(Direction dir);
+        void move(Direction dir, Position pos);
 };

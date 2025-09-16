@@ -1,32 +1,67 @@
-function init() {
-    const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement
-    if (!canvas) throw new Error("Canvas not found")
+import { assignEle, initCtx, loadConfig } from "./helpers/helpers"
+import type { CanvasRenderService, PlayerPos } from "./types"
 
-    const ctx = canvas.getContext("2d")
+function CanvasRenderService() {
 
-    if (!ctx) throw new Error("No ctx")
+    let canvas: HTMLCanvasElement
+    let ctx: CanvasRenderingContext2D
 
-    const ws = new WebSocket("ws://127.0.0.1:9023")
+    let COLOUR = 'blue'
+    let SIZE = 10
 
-    ws.onopen = () => {
-        ws.send(JSON.stringify({action: "join" }))
+    async function init() {
+        canvas = assignEle<HTMLCanvasElement>("gameCanvas")
+        ctx = initCtx(canvas)
     }
 
-    ws.onmessage = (event) => {
-        const response = JSON.parse(event.data)
-        render(canvas, ctx, response)
+    function render(response: PlayerPos[]) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = COLOUR
+        for (const player of response) {
+            ctx.fillRect(player.x * SIZE, player.y * SIZE, SIZE, SIZE)
+        }
+    }
+    
+    return { init, render }
+
+}
+
+function GameController(canvasRenderService: CanvasRenderService) {
+
+    let ws: WebSocket
+
+    function init({WS_HOST}: {WS_HOST: string}) {
+
+        ws = new WebSocket(WS_HOST)
+
+        ws.onopen = () => {
+            ws.send(JSON.stringify({action: "join", username: "chris" }))
+        }
+
+        ws.onmessage = (event) => {
+            const response: PlayerPos[] = JSON.parse(event.data)
+            canvasRenderService.render(response)
+        }
+
+        document.addEventListener("keydown", (e) => {
+            ws.send(JSON.stringify({action: "move", direction: e.key}))
+        })
     }
 
-    document.addEventListener("keydown", (e) => {
-        console.log(e.key)
-        ws.send(JSON.stringify({action: "move", direction: e.key}))
-    })
+    return { init }
 }
 
-function render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, response: {x: number, y: number}) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = 'blue'
-    ctx.fillRect(response.x * 10, response.y * 10, 10, 10)
+async function init() {
+
+    const config = await loadConfig()
+
+    const canvasRenderService = CanvasRenderService()
+    canvasRenderService.init()
+
+    const gameController = GameController(canvasRenderService)
+    gameController.init({WS_HOST: config.WS_HOST})
+
 }
+
 
 onload = init

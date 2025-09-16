@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "esbuild src/script.ts --bundle --outfile=dist/script.js && cp config/config.local.json dist/config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "esbuild": "^0.25.9",
     "typescript": "^5.9.2"
   }
 }
