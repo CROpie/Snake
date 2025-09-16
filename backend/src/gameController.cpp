@@ -1,7 +1,7 @@
 #include "gameController.h"
 
-GameController::GameController(minisocket::MiniSocket& miniSocket)
-    : miniSocket(miniSocket)
+GameController::GameController(minisocket::MiniSocket& miniSocket, SnakeGame& snakeGame)
+    : miniSocket(miniSocket), snakeGame(snakeGame)
 {
         miniSocket.on_message = [&](int client_fd, const std::string& msg) {
             this->onMessage(client_fd, msg);
@@ -28,6 +28,12 @@ json GameController::serializeGameState() {
         });
     }
 
+    playerPositions.push_back({
+        { "player", "powerup"},
+        { "x", snakeGame.powerup.x },
+        { "y", snakeGame.powerup.y },
+    });
+
     return playerPositions;
 }
 
@@ -40,8 +46,12 @@ void GameController::sendGameStateAll(minisocket::MiniSocket& miniSocket) {
 }
 
 void GameController::updateGameState() {
-    for (auto& player : players) {
+    for (Player& player : players) {
         player.snake.move(player.snake.direction, player.snake.position);
+        if (snakeGame.isTouchingPowerup(player)) {
+            player.score++;
+            snakeGame.movePowerup();
+        }
     }
 }
 

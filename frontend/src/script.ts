@@ -18,6 +18,13 @@ function CanvasRenderService() {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.fillStyle = COLOUR
         for (const player of response) {
+
+            if (player.player == "powerup") {
+                ctx.fillStyle = 'red'
+            } else {
+                ctx.fillStyle = COLOUR
+            }
+
             ctx.fillRect(player.x * SIZE, player.y * SIZE, SIZE, SIZE)
         }
     }

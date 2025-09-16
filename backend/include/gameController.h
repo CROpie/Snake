@@ -2,6 +2,7 @@
 
 #include "minisocket.hpp"
 #include "player.h"
+#include "game.h"
 
 #include "json.hpp"
 using json = nlohmann::json;
@@ -10,10 +11,12 @@ class GameController {
     public:
 
         minisocket::MiniSocket& miniSocket;
+        SnakeGame& snakeGame;
 
         std::vector<Player> players;
 
-        GameController(minisocket::MiniSocket& miniSocket);
+        GameController(minisocket::MiniSocket& miniSocket, SnakeGame& snakeGame);
+
 
         void start();
 

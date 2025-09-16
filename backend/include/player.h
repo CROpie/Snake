@@ -10,6 +10,7 @@ class Player {
 
         Snake snake;
 
+        int score;
 
         Player(int client_fd, std::string username);
 

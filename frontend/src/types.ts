@@ -1,5 +1,5 @@
 export type PlayerPos = {
-    name: string
+    player: string
     x: number
     y: number
 }
