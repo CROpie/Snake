@@ -17,6 +17,8 @@ class GameController {
 
         GameController(minisocket::MiniSocket& miniSocket, SnakeGame& snakeGame);
 
+        int TICK{200};
+
 
         void start();
 

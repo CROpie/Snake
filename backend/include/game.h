@@ -8,11 +8,6 @@
 class SnakeGame {
     public:
 
-        struct Position {
-            int x;
-            int y;
-        };
-
         SnakeGame();
 
         int MIN_X{0};

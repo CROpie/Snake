@@ -6,7 +6,11 @@ SnakeGame::SnakeGame()
 {}
 
 bool SnakeGame::isTouchingPowerup(Player& player) {
-    if (player.snake.position.x == powerup.x && player.snake.position.y == powerup.y) return true;
+    Position head = player.snake.chain.front();
+    if (head.x == powerup.x && head.y == powerup.y) {
+        player.snake.isGrow = true;
+        return true;
+    }
 
     return false;
 }

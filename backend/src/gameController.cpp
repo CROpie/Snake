@@ -18,23 +18,43 @@ Player* GameController::findPlayer(int client_fd) {
 }
 
 json GameController::serializeGameState() {
-    json playerPositions = json::array();
+    json positionData = json::array();
 
     for (auto& player : players) {
-        playerPositions.push_back({
+
+        json chain = json::array();
+
+        for (auto& pos: player.snake.chain) {
+            chain.push_back({
+                { "x", pos.x },
+                { "y", pos.y }
+            });
+        }
+
+        json playerData = {
             { "player", player.client_fd },
-            { "x", player.snake.position.x },
-            { "y", player.snake.position.y }
-        });
+            { "chain", chain}
+        };
+
+        positionData.push_back(playerData);
     }
 
-    playerPositions.push_back({
-        { "player", "powerup"},
+    // make consistent with players for now, but can improve later
+    json powerupChain = json::array();
+
+    powerupChain.push_back({
         { "x", snakeGame.powerup.x },
-        { "y", snakeGame.powerup.y },
+        { "y", snakeGame.powerup.y }
     });
 
-    return playerPositions;
+    json powerupData = {
+        { "player", "powerup" },
+        { "chain", powerupChain}
+    };
+
+    positionData.push_back(powerupData);
+
+    return positionData;
 }
 
 void GameController::sendGameStateAll(minisocket::MiniSocket& miniSocket) {
@@ -47,7 +67,13 @@ void GameController::sendGameStateAll(minisocket::MiniSocket& miniSocket) {
 
 void GameController::updateGameState() {
     for (Player& player : players) {
-        player.snake.move(player.snake.direction, player.snake.position);
+
+        if (player.snake.isGrow) {
+            player.snake.grow(player.snake.direction);
+        } else {
+            player.snake.move(player.snake.direction);
+        }
+
         if (snakeGame.isTouchingPowerup(player)) {
             player.score++;
             snakeGame.movePowerup();
@@ -61,7 +87,7 @@ void GameController::start() {
     std::thread([&]() { miniSocket.run(); }).detach();
 
     while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(TICK));
         updateGameState();
         sendGameStateAll(miniSocket);
     }

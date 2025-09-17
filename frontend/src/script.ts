@@ -1,5 +1,5 @@
 import { assignEle, initCtx, loadConfig } from "./helpers/helpers"
-import type { CanvasRenderService, PlayerPos } from "./types"
+import type { CanvasRenderService, PlayerData } from "./types"
 
 function CanvasRenderService() {
 
@@ -14,7 +14,7 @@ function CanvasRenderService() {
         ctx = initCtx(canvas)
     }
 
-    function render(response: PlayerPos[]) {
+    function render(response: PlayerData[]) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.fillStyle = COLOUR
         for (const player of response) {
@@ -25,7 +25,9 @@ function CanvasRenderService() {
                 ctx.fillStyle = COLOUR
             }
 
-            ctx.fillRect(player.x * SIZE, player.y * SIZE, SIZE, SIZE)
+            for (const pos of player.chain) {
+                ctx.fillRect(pos.x * SIZE, pos.y * SIZE, SIZE, SIZE)
+            }
         }
     }
     
@@ -46,7 +48,7 @@ function GameController(canvasRenderService: CanvasRenderService) {
         }
 
         ws.onmessage = (event) => {
-            const response: PlayerPos[] = JSON.parse(event.data)
+            const response: PlayerData[] = JSON.parse(event.data)
             canvasRenderService.render(response)
         }
 
