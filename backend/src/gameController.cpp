@@ -57,11 +57,15 @@ json GameController::serializeGameState() {
     return positionData;
 }
 
-void GameController::sendGameStateAll(minisocket::MiniSocket& miniSocket) {
+void GameController::sendGameStateAll() {
     json gameState = serializeGameState();
+    json state = {
+        { "type", "gameState" },
+        { "gameState", gameState }
+    };
 
     for (auto& player : players) {
-        miniSocket.sendFrame(player.client_fd, gameState.dump(2));
+        miniSocket.sendFrame(player.client_fd, state.dump(2));
     }
 }
 
@@ -78,7 +82,31 @@ void GameController::updateGameState() {
             player.score++;
             snakeGame.movePowerup();
         }
+
+        if (snakeGame.isTouchingWall(player)) {
+            player.snake.reset();
+        }
     }
+}
+
+void GameController::sendMapState(Player& player) {
+    json walls = json::array();
+
+    for (Position& wall : snakeGame.map.walls) {
+        walls.push_back({
+            { "x", wall.x },
+            { "y", wall.y }
+        });
+    }
+
+    json state = {
+        { "type", "walls" },
+        { "walls", walls }
+    };
+
+    // std::cout << state.dump(2) << std::endl;
+    
+    miniSocket.sendFrame(player.client_fd, state.dump(2));
 }
 
 void GameController::start() {
@@ -86,10 +114,12 @@ void GameController::start() {
 
     std::thread([&]() { miniSocket.run(); }).detach();
 
+    
+
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(TICK));
         updateGameState();
-        sendGameStateAll(miniSocket);
+        sendGameStateAll();
     }
 }
 
@@ -116,6 +146,7 @@ void GameController::handleChangeDirection(int client_fd, json request) {
 void GameController::handleInitialConnect(int client_fd, json request) {
     Player newPlayer(client_fd, request["username"]);
     players.emplace_back(newPlayer);
+    sendMapState(newPlayer);
 }
 
 void GameController::onMessage(int client_fd, const std::string& msg) {

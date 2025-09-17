@@ -32,9 +32,11 @@ class GameController {
         void handleChangeDirection(int client_fd, json request);
 
         // sending data to client
+        void sendMapState(Player& player);
+
         json serializeGameState();
 
-        void sendGameStateAll(minisocket::MiniSocket& miniSocket);
+        void sendGameStateAll();
 
         // helpers
         Player* findPlayer(int client_fd);

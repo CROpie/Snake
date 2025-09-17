@@ -16,18 +16,17 @@ class Snake {
             RIGHT
         };
 
-        Position head{0,2};
-        Position body{0,1};
-        Position tail{0,0};
-
+        Position head{1,1};
         Position growHead{};
         bool isGrow{false};
 
-        std::list<Position> chain{tail, body, head};
+        std::list<Position> chain{head};
 
         Direction direction{DOWN};
 
         void move(Direction dir);
         void grow(Direction newHead);
         void updateChain(Position newHead);
+
+        void reset();
 };

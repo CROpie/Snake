@@ -2,22 +2,21 @@
 
 #include "snake.h"
 #include "player.h"
+#include "map.h"
 
 #include <random>
 
 class SnakeGame {
     public:
+        Map map;
 
-        SnakeGame();
-
-        int MIN_X{0};
-        int MAX_X{10};
-        int MIN_Y{0};
-        int MAX_Y{10};
+        SnakeGame(Map map);
 
         Position powerup{5,5};
 
         bool isTouchingPowerup(Player& player);
+        bool isTouchingWall(Player& player);
+
         void movePowerup();
 
     private:

@@ -53,3 +53,11 @@ void Snake::move(Direction dir) {
     }
     updateChain(newHead);
 }
+
+void Snake::reset() {
+    chain.clear();
+
+    Position head{1,1};
+    chain.push_back(head);
+    direction = DOWN;
+}

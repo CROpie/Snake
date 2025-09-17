@@ -1,21 +1,34 @@
 import { assignEle, initCtx, loadConfig } from "./helpers/helpers"
-import type { CanvasRenderService, PlayerData } from "./types"
+import type { CanvasRenderService, SnakeResponse, PlayerData, Position } from "./types"
 
 function CanvasRenderService() {
 
     let canvas: HTMLCanvasElement
     let ctx: CanvasRenderingContext2D
 
+    let WALL_COLOUR = 'black'
     let COLOUR = 'blue'
     let SIZE = 10
+
+    let walls: Position[] = []
 
     async function init() {
         canvas = assignEle<HTMLCanvasElement>("gameCanvas")
         ctx = initCtx(canvas)
     }
 
+    function setWalls(WALLS: Position[]) {
+        walls = WALLS
+    }
+
     function render(response: PlayerData[]) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        ctx.fillStyle = WALL_COLOUR
+        for (const wall of walls) {
+            ctx.fillRect(wall.x * SIZE, wall.y * SIZE, SIZE, SIZE)
+        }
+
         ctx.fillStyle = COLOUR
         for (const player of response) {
 
@@ -31,7 +44,7 @@ function CanvasRenderService() {
         }
     }
     
-    return { init, render }
+    return { init, setWalls, render }
 
 }
 
@@ -48,8 +61,19 @@ function GameController(canvasRenderService: CanvasRenderService) {
         }
 
         ws.onmessage = (event) => {
-            const response: PlayerData[] = JSON.parse(event.data)
-            canvasRenderService.render(response)
+            const response: SnakeResponse = JSON.parse(event.data)
+
+            console.log(response)
+
+            if (response.type === "walls") {
+                canvasRenderService.setWalls(response.walls)
+                return
+            }
+
+            if (response.type === "gameState") {
+                canvasRenderService.render(response.gameState)
+                return
+            }            
         }
 
         document.addEventListener("keydown", (e) => {
