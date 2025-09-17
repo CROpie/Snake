@@ -85,6 +85,12 @@ void GameController::updateGameState() {
 
         if (snakeGame.isTouchingWall(player)) {
             player.snake.reset();
+            return;
+        }
+
+        if (snakeGame.isTouchingSnake(players, player)) {
+            player.snake.reset();
+            return;
         }
     }
 }

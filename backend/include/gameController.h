@@ -19,7 +19,6 @@ class GameController {
 
         int TICK{200};
 
-
         void start();
 
     private:

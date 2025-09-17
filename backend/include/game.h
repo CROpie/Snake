@@ -16,6 +16,7 @@ class SnakeGame {
 
         bool isTouchingPowerup(Player& player);
         bool isTouchingWall(Player& player);
+        bool isTouchingSnake(std::vector<Player>& players, Player& player);
 
         void movePowerup();
 

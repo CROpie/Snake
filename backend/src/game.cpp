@@ -26,6 +26,36 @@ bool SnakeGame::isTouchingWall(Player& player) {
     return false;
 }
 
+bool SnakeGame::isTouchingSnake(std::vector<Player>& players, Player& player) {
+
+    Position head = player.snake.chain.front();
+
+    // check self
+    std::list<Position> body = player.snake.chain;
+    body.pop_front();
+
+    for (Position& segment : body) {
+        if (head.x == segment.x && head.y == segment.y) {
+            return true;
+        }
+    }
+
+    // check other snakes
+    for (Player& opponent : players) {
+        if (opponent.client_fd == player.client_fd) continue;
+
+
+        for (Position& segment : opponent.snake.chain) {
+            if (head.x == segment.x && head.y == segment.y) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+
+}
+
 int SnakeGame::getRandom(int N) {
 
     std::uniform_int_distribution<> dist(1, N);
