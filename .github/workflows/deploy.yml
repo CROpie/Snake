@@ -1,0 +1,97 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - feat/*
+
+jobs:
+  build-and-deploy-frontend:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build:prod
+      
+      - name: Prepare files for deployment
+        run: |
+          rm -rf deploy && mkdir deploy
+          cp frontend/index.html deploy/
+          cp -r frontend/dist deploy/
+          cp -r frontend/images deploy/
+          cp -r frontend/styles deploy/
+
+
+      - name: Deploy to droplet
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          source: "deploy/*"
+          target: "/var/www/snake"
+          overwrite: true
+          strip_components: 1
+
+  build-and-deploy-backend:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          mkdir -p build
+          cd ./build
+          cmake ..
+          make
+          ls -A
+
+# Can't overwrite file that is currently running.
+# Instead, copy to tmp and move after stopping service
+      - name: Deploy to droplet
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          source: "backend/build/snakebackend"
+          target: "/var/www/snake/backend/tmp"
+          overwrite: true
+          strip_components: 2
+
+  restart-resources:
+    runs-on: ubuntu-22.04
+    needs: [build-and-deploy-frontend, build-and-deploy-backend]
+    steps:
+      - name: Restart tmux
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            if tmux has-session -t prod 2>/dev/null; then
+              tmux kill-session -t prod
+            fi
+            cd /var/www/snake/backend
+            mv ./tmp/* .
+            rm -rf ./tmp
+            cd ../..
+            ./start.sh

@@ -21,11 +21,14 @@ export type WallResponse = {
 export type SnakeResponse = GameStateResponse | WallResponse
 
 export interface CanvasRenderService {
-    init: () => void
+    init: ({IMAGE_PATH}: {IMAGE_PATH: string}) => void
     render: (response: PlayerData[]) => void
     setWalls: (WALLS: Position[]) => void
 }
 
 export type Config = {
     WS_HOST: string
+    LOBBY_URL: string
+    AUTH_BASE_URL: string
+    IMAGE_PATH: string
 }

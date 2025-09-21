@@ -22,14 +22,14 @@ function CanvasRenderService() {
 
     let walls: Position[] = []
 
-    async function init() {
+    async function init({IMAGE_PATH}: {IMAGE_PATH: string}) {
         canvas = assignEle<HTMLCanvasElement>("gameCanvas")
         ctx = initCtx(canvas)
 
-        gridSprite.src = "./images/Grid.png"
-        wallSprite.src = "./images/Walls.png"
-        powerupSprite.src = "./images/Powerups.png"
-        snakeSprite.src = "./images/Snake.png"
+        gridSprite.src = `${IMAGE_PATH}/images/Grid.png`
+        wallSprite.src = `${IMAGE_PATH}/images/Walls.png`
+        powerupSprite.src = `${IMAGE_PATH}/images/Powerups.png`
+        snakeSprite.src = `${IMAGE_PATH}/images/Snake.png`
     }
 
     function setWalls(WALLS: Position[]) {
@@ -300,12 +300,82 @@ function GameController(canvasRenderService: CanvasRenderService) {
     return { init }
 }
 
+function AuthService() {
+
+    let lobbyUrl = ''
+    let authBaseUrl = ''
+    let userData = ''
+
+    async function validateToken(): Promise<boolean> {
+        try {
+
+            const response = await fetch(`${authBaseUrl}/api/authenticate`, {
+                    method: "GET",
+                    credentials: 'include'
+                })
+    
+            let json;
+
+            // just handing the situation where data might be empty or not json
+            try {
+                json = await response.json()
+            } catch {
+                json = null
+            }
+    
+            if (!response.ok) {
+                console.error(json?.error ?? "something went wrong...")
+                return false
+            }
+    
+            if (!json?.data) {
+                console.error("Response did not contain data object")
+                return false
+            }
+
+            userData = JSON.stringify(json.data)
+    
+            return true
+    
+        } catch (error) {
+            console.error("Network error: request failed")
+            return false
+        }
+    }
+
+    function init({LOBBY_URL, AUTH_BASE_URL}: {LOBBY_URL: string, AUTH_BASE_URL: string}) {
+        lobbyUrl = LOBBY_URL
+        authBaseUrl = AUTH_BASE_URL
+    }
+
+    function sendToReturnUrl() {
+        window.location.href = lobbyUrl
+    }
+
+    function getUserData() {
+        return userData
+    }
+
+
+
+    return { init, sendToReturnUrl, validateToken, getUserData }
+}
+
 async function init() {
 
     const config = await loadConfig()
 
+    const authService = AuthService()
+
+    authService.init({ LOBBY_URL: config.LOBBY_URL, AUTH_BASE_URL: config.AUTH_BASE_URL })
+
+    if (!await authService.validateToken()){
+        authService.sendToReturnUrl()
+        return
+    }
+
     const canvasRenderService = CanvasRenderService()
-    canvasRenderService.init()
+    canvasRenderService.init({IMAGE_PATH: config.IMAGE_PATH})
 
     const gameController = GameController(canvasRenderService)
     gameController.init({WS_HOST: config.WS_HOST})
