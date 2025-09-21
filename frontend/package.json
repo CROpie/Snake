@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "esbuild src/script.ts --bundle --outfile=dist/script.js && cp config/config.local.json dist/config.json",
+    "build:prod": "esbuild src/script.ts --bundle --outfile=dist/script.js && cp config/config.prod.json dist/config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
