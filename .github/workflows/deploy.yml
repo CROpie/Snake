@@ -71,7 +71,7 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          source: backend/build/snakebackend"
+          source: "backend/build/snakebackend"
           target: "/var/www/snake/backend/tmp"
           overwrite: true
           strip_components: 2
@@ -83,7 +83,7 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          source: backend/maps/"
+          source: "backend/maps/"
           target: "/var/www/snake/backend/tmp"
           overwrite: true
           strip_components: 1
