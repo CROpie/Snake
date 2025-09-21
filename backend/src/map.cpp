@@ -3,8 +3,16 @@
 Map::Map(std::string filename)
     : filename(filename)
 {
-    std::string path = "../maps/" + filename;
+    // deploy path
+    std::string path = "./maps/" + filename;
     std::ifstream infile(path);
+
+    // dev path
+    if (!infile) {
+        path = "../maps/" + filename;
+        infile.open(path);
+    }
+
     if (!infile) throw std::runtime_error("Could not open " + filename);
 
     std::vector<std::string> grid;

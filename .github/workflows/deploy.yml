@@ -65,16 +65,28 @@ jobs:
 
 # Can't overwrite file that is currently running.
 # Instead, copy to tmp and move after stopping service
-      - name: Deploy to droplet
+      - name: Deploy compiled code to droplet
         uses: appleboy/scp-action@v0.1.5
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          source: "backend/build/snakebackend"
+          source: backend/build/snakebackend"
           target: "/var/www/snake/backend/tmp"
           overwrite: true
           strip_components: 2
+
+# Not the most efficient process, but want strip_components 1 for maps so it'll do for now
+      - name: Deploy maps to droplet
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          source: backend/maps/"
+          target: "/var/www/snake/backend/tmp"
+          overwrite: true
+          strip_components: 1
 
   restart-resources:
     runs-on: ubuntu-22.04
