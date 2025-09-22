@@ -6,6 +6,10 @@ GameController::GameController(minisocket::MiniSocket& miniSocket, SnakeGame& sn
         miniSocket.on_message = [&](int client_fd, const std::string& msg) {
             this->onMessage(client_fd, msg);
         };
+
+        miniSocket.on_disconnect = [&](int client_fd) {
+            this->onDisconnect(client_fd);
+        };
 }
 
 Player* GameController::findPlayer(int client_fd) {
@@ -171,3 +175,17 @@ void GameController::onMessage(int client_fd, const std::string& msg) {
     }
 }
 
+void GameController::onDisconnect(int client_fd) {
+
+    Player* playerToRemove = findPlayer(client_fd);
+
+    // remove from gameController
+    players.erase(
+        std::remove_if(players.begin(), players.end(),
+            [client_fd](const Player& p) { return p.client_fd == client_fd; }),
+        players.end()
+    );
+
+    // remove from miniSocket
+    miniSocket.remove_client(client_fd);
+}

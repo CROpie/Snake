@@ -23,6 +23,7 @@ class GameController {
 
     private:
         void onMessage(int client_fd, const std::string& msg);
+        void onDisconnect(int client_fd);
 
         void updateGameState();
 
