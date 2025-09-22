@@ -36,7 +36,7 @@ function CanvasRenderService() {
         walls = WALLS
     }
 
-    function render(response: PlayerData[]) {
+    function render(response: PlayerData[], colour: number) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
 
 
@@ -96,8 +96,7 @@ function CanvasRenderService() {
                 ctx.fillStyle = 'red'
                 renderPowerup(player)
             } else {
-                ctx.fillStyle = COLOUR
-                renderSnake(player)
+                renderSnake(player, colour)
             }
         }
 
@@ -223,12 +222,35 @@ function CanvasRenderService() {
 
     }
     
-    function renderSnake(player: PlayerData) {
+    function renderSnake(player: PlayerData, colour: number) {
+
+        let snakeColour = 'white' // default
+
+        switch (colour) {
+            case 0:
+                snakeColour = 'red'
+                break
+            case 1:
+                snakeColour = 'orange'
+                break   
+            case 2:
+                snakeColour = 'yellow'
+                break
+            case 3:
+                snakeColour = 'green'
+                break
+            case 4:
+                snakeColour = 'blue'
+                break
+            case 5:
+                snakeColour = 'purple'
+                break
+        }
 
         for (let i = 0; i < player.chain.length; i++) {
 
             const spritePos = findSnakeSegmentSprite(player.chain[i]!, player.chain[i-1], player.chain[i+1])
-            drawSnakeSegment(player.chain[i]!, spritePos)
+            drawSnakeSegment(player.chain[i]!, spritePos, snakeColour)
         }
     }
 
@@ -236,7 +258,8 @@ function CanvasRenderService() {
         return Math.floor(Math.random() * range)
     }
 
-    function drawSnakeSegment(current: Position, spritePos: Position) {
+    function drawSnakeSegment(current: Position, spritePos: Position, snakeColour: string) {
+
         ctx.drawImage(
             snakeSprite, // sprite sheet
             spritePos.x, spritePos.y, // source X, Y (from top-left corner)
@@ -245,14 +268,14 @@ function CanvasRenderService() {
             SIZE, SIZE // width and height to draw on canvas
         )
 
-          // overlay with chosen color
-            ctx.fillStyle = 'orange';
-            ctx.globalCompositeOperation = "source-atop";
-            ctx.fillRect(current.x * SIZE, current.y * SIZE, SIZE, SIZE);
+        // overlay with chosen color
+        ctx.fillStyle = snakeColour;
+        ctx.globalCompositeOperation = "source-atop";
+        ctx.fillRect(current.x * SIZE, current.y * SIZE, SIZE, SIZE);
 
-            // reset blending mode
-            ctx.globalCompositeOperation = "source-over";
-                }
+        // reset blending mode
+        ctx.globalCompositeOperation = "source-over";
+    }
 
     function offsetSnakePos(x: number, y: number): Position {
         let offsetSpritePos: Position = { x: x - OFFSET, y: y - OFFSET}
@@ -267,13 +290,18 @@ function CanvasRenderService() {
 function GameController(canvasRenderService: CanvasRenderService) {
 
     let ws: WebSocket
+    let username = ''
 
-    function init({WS_HOST}: {WS_HOST: string}) {
+    function init({WS_HOST, userData}: {WS_HOST: string, userData: any}) {
+        
+        if (!userData) throw new Error("No user data")
+
+        username = JSON.parse(userData).username ?? "unknown"
 
         ws = new WebSocket(WS_HOST)
 
         ws.onopen = () => {
-            ws.send(JSON.stringify({action: "join", username: "chris" }))
+            ws.send(JSON.stringify({action: "join", username }))
         }
 
         ws.onmessage = (event) => {
@@ -287,7 +315,7 @@ function GameController(canvasRenderService: CanvasRenderService) {
             }
 
             if (response.type === "gameState") {
-                canvasRenderService.render(response.gameState)
+                canvasRenderService.render(response.gameState, response.colour)
                 return
             }            
         }
@@ -378,7 +406,7 @@ async function init() {
     canvasRenderService.init({IMAGE_PATH: config.IMAGE_PATH})
 
     const gameController = GameController(canvasRenderService)
-    gameController.init({WS_HOST: config.WS_HOST})
+    gameController.init({WS_HOST: config.WS_HOST, userData: authService.getUserData()})
 
 }
 

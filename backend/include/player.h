@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <random>
 #include "snake.h"
 
 class Player {
@@ -11,6 +12,7 @@ class Player {
         Snake snake;
 
         int score;
+        int colour;
 
         Player(int client_fd, std::string username);
 

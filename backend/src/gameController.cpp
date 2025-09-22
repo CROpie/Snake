@@ -65,6 +65,7 @@ void GameController::sendGameStateAll() {
     };
 
     for (auto& player : players) {
+        state.push_back({"colour", player.colour});
         miniSocket.sendFrame(player.client_fd, state.dump(2));
     }
 }
