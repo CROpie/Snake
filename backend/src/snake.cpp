@@ -50,10 +50,18 @@ void Snake::move(Direction dir) {
     updateChain(newHead);
 }
 
-void Snake::reset() {
-    chain.clear();
 
-    Position head{1,1};
-    chain.push_back(head);
-    direction = DOWN;
+void Snake::checkRespawn() {
+    if (std::chrono::steady_clock::now() >= respawn_time) {
+        isAlive = true;
+        Position head{1,1};
+        chain.push_back(head);
+        direction = DOWN;
+    }
+}
+
+void Snake::die() {
+    isAlive = false;
+    chain.clear();
+    respawn_time = std::chrono::steady_clock::now() + std::chrono::seconds(2);
 }

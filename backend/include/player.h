@@ -11,7 +11,7 @@ class Player {
 
         Snake snake;
 
-        int score;
+        int lives{5};
         int colour;
 
         Player(int client_fd, std::string username);

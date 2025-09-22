@@ -36,8 +36,10 @@ json GameController::serializeGameState() {
         }
 
         json playerData = {
-            { "player", player.client_fd },
-            { "chain", chain}
+            { "player", player.username },
+            { "chain", chain },
+            { "colour", player.colour },
+            { "lives", player.lives }
         };
 
         positionData.push_back(playerData);
@@ -69,13 +71,20 @@ void GameController::sendGameStateAll() {
     };
 
     for (auto& player : players) {
-        state.push_back({"colour", player.colour});
         miniSocket.sendFrame(player.client_fd, state.dump(2));
     }
+    
 }
 
 void GameController::updateGameState() {
     for (Player& player : players) {
+
+        if (!player.lives) continue;
+
+        if (!player.snake.isAlive) {
+            player.snake.checkRespawn();
+            continue;
+        }
 
         if (player.snake.isGrow) {
             player.snake.grow(player.snake.direction);
@@ -84,17 +93,18 @@ void GameController::updateGameState() {
         }
 
         if (snakeGame.isTouchingPowerup(player)) {
-            player.score++;
             snakeGame.movePowerup();
         }
 
         if (snakeGame.isTouchingWall(player)) {
-            player.snake.reset();
+            player.lives--;
+            player.snake.die();
             return;
         }
 
         if (snakeGame.isTouchingSnake(players, player)) {
-            player.snake.reset();
+            player.lives--;
+            player.snake.die();
             return;
         }
     }
@@ -124,8 +134,6 @@ void GameController::start() {
     miniSocket.init();
 
     std::thread([&]() { miniSocket.run(); }).detach();
-
-    
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(TICK));

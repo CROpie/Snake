@@ -1,6 +1,8 @@
 #pragma once
 
 #include <list>
+#include <chrono>
+#include <thread>
 
 struct Position {
     int x;
@@ -19,6 +21,9 @@ class Snake {
         Position head{1,1};
         Position growHead{};
         bool isGrow{false};
+        bool isAlive{true};
+
+        std::chrono::steady_clock::time_point respawn_time;
 
         std::list<Position> chain{head};
 
@@ -28,5 +33,6 @@ class Snake {
         void grow(Direction newHead);
         void updateChain(Position newHead);
 
-        void reset();
+        void die();
+        void checkRespawn();
 };

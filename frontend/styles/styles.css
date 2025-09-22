@@ -5,6 +5,7 @@
     background: black;
 }
 
-canvas {
-    border: 2px solid lime;
+ul {
+    list-style-type: none;
+    color: lime;
 }

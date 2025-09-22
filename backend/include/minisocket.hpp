@@ -248,7 +248,7 @@ class MiniSocket {
                 // text frame -> call handler function (if it has been passed in to minisocket)
                if (frame.opcode == 0x1) {
 
-                std::cout << "PAYLOAD: " << frame.payload.c_str()  << std::endl;
+                // std::cout << "PAYLOAD: " << frame.payload.c_str()  << std::endl;
 
                 if (on_message) on_message(client_fd, frame.payload);
                }

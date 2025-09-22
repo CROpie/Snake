@@ -5,12 +5,13 @@ export type Position = {
 
 export type PlayerData = {
     player: string
+    colour: number
+    lives: number
     chain: Position[]
 }
 
 export type GameStateResponse = {
     type: "gameState"
-    colour: number
     gameState: PlayerData[]
 }
 
@@ -23,7 +24,7 @@ export type SnakeResponse = GameStateResponse | WallResponse
 
 export interface CanvasRenderService {
     init: ({IMAGE_PATH}: {IMAGE_PATH: string}) => void
-    render: (response: PlayerData[], colour: number) => void
+    render: (response: PlayerData[]) => void
     setWalls: (WALLS: Position[]) => void
 }
 

@@ -36,7 +36,7 @@ function CanvasRenderService() {
         walls = WALLS
     }
 
-    function render(response: PlayerData[], colour: number) {
+    function render(response: PlayerData[]) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
 
 
@@ -96,7 +96,7 @@ function CanvasRenderService() {
                 ctx.fillStyle = 'red'
                 renderPowerup(player)
             } else {
-                renderSnake(player, colour)
+                renderSnake(player, player.colour)
             }
         }
 
@@ -291,8 +291,11 @@ function GameController(canvasRenderService: CanvasRenderService) {
 
     let ws: WebSocket
     let username = ''
+    let playerLives: HTMLUListElement
 
     function init({WS_HOST, userData}: {WS_HOST: string, userData: any}) {
+
+        playerLives = assignEle<HTMLUListElement>("playerLives")
         
         if (!userData) throw new Error("No user data")
 
@@ -315,7 +318,8 @@ function GameController(canvasRenderService: CanvasRenderService) {
             }
 
             if (response.type === "gameState") {
-                canvasRenderService.render(response.gameState, response.colour)
+                canvasRenderService.render(response.gameState)
+                listPlayerLives(response.gameState)
                 return
             }            
         }
@@ -323,6 +327,16 @@ function GameController(canvasRenderService: CanvasRenderService) {
         document.addEventListener("keydown", (e) => {
             ws.send(JSON.stringify({action: "move", direction: e.key}))
         })
+    }
+
+    function listPlayerLives(gameState: PlayerData[]) {
+        playerLives.innerHTML = ""
+        for (const player of gameState) {
+            if (player.player == "powerup") continue
+            const li = document.createElement('li')
+            li.textContent = `${player.player}: ${player.lives}`
+            playerLives.appendChild(li)
+        }
     }
 
     return { init }
